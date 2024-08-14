@@ -95,6 +95,8 @@ class ATMUI:
         self.user_id = None
         self.atm = None
         self.show_login_screen()
+        self.conn = sqlite3.connect('atm.db')
+        self.cursor = self.conn.cursor()
 
     def show_login_screen(self):
         self.clear_window()
@@ -188,16 +190,24 @@ class ATMUI:
             try:
                 user_id = int(user_id)
                 initial_balance = float(initial_balance)
+                self.cursor.execute('SELECT id FROM users WHERE id=?', (user_id,))
+                if self.cursor.fetchone() is not None:
+                    messagebox.showerror("Error", "User ID already exists. Please choose another one.")
+                    self.conn.close()
+                    return
+
                 if len(pin) == 4 and pin.isdigit():
                     initialize_user(user_id, initial_balance, pin)
                     messagebox.showinfo("Success", "User registered successfully!")
                     self.show_login_screen()
                 else:
                     messagebox.showerror("Error", "Invalid PIN. Please enter a 4-digit number.")
+                self.conn.close()
             except ValueError:
                 messagebox.showerror("Error", "Invalid input. Please enter valid values.")
         else:
             messagebox.showerror("Error", "All fields are required.")
+
 
     def login_user(self):
         user_id = self.user_id_entry.get()
